@@ -1,11 +1,10 @@
-// pages/api/cities.js
+// api/cities.js
 
-import axios from 'axios';
+const axios = require('axios');
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   const { q } = req.query;
 
-  // Log the query parameter for debugging
   console.log('Query parameter (q):', q);
 
   // Validate the query parameter
@@ -14,10 +13,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Query parameter "q" is required and should be at least 3 characters long.' });
   }
 
-  // Log the Mapbox API key to verify it's being accessed (remove in production)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Mapbox API Key:', process.env.MAPBOX_ACCESS_TOKEN);
-  }
+  console.log('Mapbox API Key:', process.env.MAPBOX_ACCESS_TOKEN);
 
   try {
     // Fetch city data from Mapbox Geocoding API
@@ -31,7 +27,6 @@ export default async function handler(req, res) {
 
     const geoData = geoResponse.data.features;
 
-    // Log the received city data
     console.log('GeoData received:', geoData);
 
     // If no cities found, return a 404 error
@@ -75,4 +70,4 @@ export default async function handler(req, res) {
     // Return a 500 error if something goes wrong
     res.status(500).json({ error: 'Failed to fetch city data.' });
   }
-}
+};
