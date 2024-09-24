@@ -27,7 +27,7 @@ const SearchCity = ({ onCitySelect }) => {
         setError(null);
 
         try {
-          const response = await axios.get('/api/cities', {
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/cities`, {
             params: { q: input },
           });
 
