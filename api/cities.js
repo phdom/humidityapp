@@ -14,7 +14,8 @@ export default async function handler(req, res) {
       params: {
         q,            // The city query from the user
         limit: 5,     // Limit the number of results
-        appid: process.env.OPENWEATHER_API_KEY  // Use your OpenWeatherMap API key from environment variables
+        appid: process.env.WEATHER_API_KEY  // Now this matches your .env
+  // Use your OpenWeatherMap API key from environment variables
       }
     });
 
