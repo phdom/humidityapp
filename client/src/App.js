@@ -33,7 +33,7 @@ const App = () => {
               fontFamily: '"Oswald", sans-serif'  // Use a modern, clean font
             }}
           >
-            Breeze Buddy 
+            AirAware 
           </Typography>
         </Box>
 
