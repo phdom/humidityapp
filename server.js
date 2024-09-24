@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -36,10 +35,10 @@ app.get('/api/weather', async (req, res) => {
   }
 });
 
-// Endpoint to fetch city suggestions using OpenWeatherMap Geocoding API
+// Endpoint to fetch city suggestions using Mapbox Geocoding API
 app.get('/api/cities', async (req, res) => {
   const query = req.query.q;
-  const API_KEY = process.env.WEATHER_API_KEY; // Ensure this key is set in your .env file
+  const MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN; // Ensure this key is set in your .env file
 
   if (!query) {
     return res.status(400).json({ error: 'Query parameter "q" is required' });
@@ -47,30 +46,35 @@ app.get('/api/cities', async (req, res) => {
 
   try {
     const response = await axios.get(
-      'https://api.openweathermap.org/geo/1.0/direct',
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`,
       {
         params: {
-          q: query,
-          limit: 5,
-          appid: API_KEY,
+          access_token: MAPBOX_ACCESS_TOKEN,
+          limit: 5, // Limit the number of results
+          types: 'place', // Restrict results to cities or places
         },
       }
     );
-    res.json(response.data);
+    const cityData = response.data.features.map((feature) => {
+      const countryContext = feature.context.find(c => c.id.startsWith('country'));
+      const stateContext = feature.context.find(c => c.id.startsWith('region'));
+      
+      return {
+        name: feature.text,
+        full_name: feature.place_name,
+        latitude: feature.center[1],
+        longitude: feature.center[0],
+        country: countryContext ? countryContext.text : null,
+        state: stateContext ? stateContext.text : null,
+      };
+    });
+    
+    res.json(cityData);
   } catch (error) {
     console.error('Error fetching city suggestions:', error.message);
     res.status(500).json({ error: 'Error fetching city suggestions' });
   }
 });
-
-// Serve static files from the React app (if applicable)
-// const path = require('path');
-// app.use(express.static(path.join(__dirname, 'client/build')));
-
-// Catch-all handler to serve the React app for any requests that don't match the above
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname + '/client/build/index.html'));
-// });
 
 // Start the server
 app.listen(port, () => {
