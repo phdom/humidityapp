@@ -1,1 +1,13 @@
 .env
+
+# macOS system files
+.DS_Store
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Build directory
+client/build/
