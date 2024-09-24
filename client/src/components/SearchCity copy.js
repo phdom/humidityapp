@@ -1,7 +1,7 @@
-// src/components/SearchCity.js
+// client/src/components/SearchCity.js
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { TextField, Autocomplete, Grid, InputAdornment, CircularProgress } from '@mui/material';
+import { TextField, Autocomplete, Grid, InputAdornment, CircularProgress, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import debounce from 'lodash.debounce';
@@ -120,7 +120,7 @@ const SearchCity = ({ onCitySelect }) => {
                 ),
               }}
               error={!!error}
-              helperText={error ? <span style={{ color: 'red' }}>{error}</span> : null} // Fixed nested <p> issue
+              helperText={error ? <Typography color="error">{error}</Typography> : null}
             />
           )}
         />
