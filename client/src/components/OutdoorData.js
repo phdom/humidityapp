@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+// src/components/OutdoorData.js
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, Typography, CircularProgress, Alert, Grid, Box } from '@mui/material';
 import axios from 'axios';
 import { getHumidityAdvice } from '../utils';
-import { Thermostat, Opacity, WbSunny, Cloud, Grain, InfoOutlined, Air, Umbrella } from '@mui/icons-material';
+import { Thermostat, Opacity, WbSunny, Cloud, Grain, Air, Umbrella } from '@mui/icons-material';
 
 const WEATHER_CODES = {
+  // Weather codes and corresponding descriptions
   0: { description: 'Clear sky', Icon: WbSunny, color: '#fbc02d' },
   1: { description: 'Mainly clear', Icon: Cloud, color: '#9e9e9e' },
   2: { description: 'Partly cloudy', Icon: Cloud, color: '#9e9e9e' },
@@ -37,13 +40,17 @@ const convertWindDirection = (deg) => COMPASS_DIRECTIONS[Math.round(deg / 45) % 
 const getAdviceStyle = (humidity) => ({
   icon: <Opacity fontSize="large" style={{ color: '#ffffff' }} />,
   backgroundColor: '#3881A1',
-  textColor: '#ffffff'
+  textColor: '#ffffff',
 });
 
 const WeatherInfo = ({ icon, label, value }) => (
   <Grid container spacing={1} alignItems="center">
     <Grid item>{icon}</Grid>
-    <Grid item><Typography variant="body1"><strong>{label}:</strong> {value}</Typography></Grid>
+    <Grid item>
+      <Typography variant="body1">
+        <strong>{label}:</strong> {value}
+      </Typography>
+    </Grid>
   </Grid>
 );
 
@@ -52,6 +59,7 @@ const OutdoorData = ({ city, country, indoorData }) => {
   const [humidityAdvice, setHumidityAdvice] = useState('');
   const [error, setError] = useState(null);
 
+  // Function to fetch weather data from Open-Meteo
   const fetchWeatherData = async (lat, lon) => {
     try {
       const { data } = await axios.get('https://api.open-meteo.com/v1/forecast', {
@@ -62,6 +70,8 @@ const OutdoorData = ({ city, country, indoorData }) => {
           current_weather: true,
         },
       });
+
+      console.log('Open Meteo API Response:', data); // Debugging log for weather data
 
       const currentHour = new Date(data.current_weather.time).getHours();
       setWeatherData({
@@ -78,14 +88,24 @@ const OutdoorData = ({ city, country, indoorData }) => {
     }
   };
 
-  const fetchCoordinates = async () => {
+  // Memoized fetchCoordinates function using Mapbox Geocoding API
+  const fetchCoordinates = useCallback(async () => {
     try {
-      const { data } = await axios.get('https://api.openweathermap.org/geo/1.0/direct', {
-        params: { q: `${city},${country}`, limit: 1, appid: process.env.REACT_APP_OPENWEATHERMAP_API_KEY },
-      });
+      const { data } = await axios.get(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)},${encodeURIComponent(country)}.json`,
+        {
+          params: {
+            access_token: process.env.REACT_APP_MAPBOX_ACCESS_TOKEN, // Ensure this is correctly set
+            limit: 1,
+            types: 'place', // Restrict to cities
+          },
+        }
+      );
 
-      if (data.length) {
-        const { lat, lon } = data[0];
+      console.log('Mapbox Geocoding API Response:', data); // Debugging log for coordinates
+
+      if (data.features.length) {
+        const [lon, lat] = data.features[0].center;
         fetchWeatherData(lat, lon);
       } else {
         setError(`Could not find coordinates for "${city}, ${country}".`);
@@ -94,12 +114,14 @@ const OutdoorData = ({ city, country, indoorData }) => {
       console.error('Error fetching coordinates:', err.message);
       setError(`Error fetching location for "${city}, ${country}". Please try again.`);
     }
-  };
-
-  useEffect(() => {
-    if (city && country) fetchCoordinates();
   }, [city, country]);
 
+  // Fetch coordinates when the component mounts or city/country changes
+  useEffect(() => {
+    if (city && country) fetchCoordinates();
+  }, [city, country, fetchCoordinates]);
+
+  // Update humidity advice when weather data or indoor data changes
   useEffect(() => {
     if (weatherData && indoorData.temperature && indoorData.humidity) {
       const advice = getHumidityAdvice(
@@ -112,6 +134,12 @@ const OutdoorData = ({ city, country, indoorData }) => {
     }
   }, [weatherData, indoorData]);
 
+  // Debugging log to see if weatherData is populated
+  useEffect(() => {
+    console.log('weatherData:', weatherData);
+  }, [weatherData]);
+
+  // Render loading spinner or error message
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!weatherData) return <Typography align="center"><CircularProgress /></Typography>;
 
@@ -120,21 +148,23 @@ const OutdoorData = ({ city, country, indoorData }) => {
   return (
     <Card sx={{ mb: 4, backgroundColor: '#ffffff', borderRadius: '15px' }}>
       <CardContent>
-        <Typography variant="h5" gutterBottom>Weather in {city}, {country}</Typography>
-        <WeatherInfo 
-          icon={getWeatherIcon(weatherData.weathercode)} 
-          label="Condition" 
+        <Typography variant="h5" gutterBottom>
+          Weather in {city}, {country}
+        </Typography>
+        <WeatherInfo
+          icon={getWeatherIcon(weatherData.weathercode)}
+          label="Condition"
           value={WEATHER_CODES[weatherData.weathercode]?.description || 'Unknown'}
         />
         <WeatherInfo icon={<Thermostat color="error" />} label="Temperature" value={`${weatherData.temperature}°C`} />
         <WeatherInfo icon={<Opacity color="primary" />} label="Humidity" value={`${weatherData.relativehumidity}%`} />
-        <WeatherInfo 
-          icon={<Air color="action" />} 
-          label="Wind" 
-          value={`${weatherData.windspeed} m/s, ${convertWindDirection(weatherData.winddirection)}`} 
+        <WeatherInfo
+          icon={<Air color="action" />}
+          label="Wind"
+          value={`${weatherData.windspeed} m/s, ${convertWindDirection(weatherData.winddirection)}`}
         />
         <WeatherInfo icon={<Umbrella color="primary" />} label="Precipitation" value={`${weatherData.precipitation} mm`} />
-        
+
         {humidityAdvice && (
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 3, p: 2, backgroundColor: adviceStyle.backgroundColor, borderRadius: '10px' }}>
             {adviceStyle.icon}

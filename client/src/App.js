@@ -9,6 +9,10 @@ const App = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [indoorData, setIndoorData] = useState({});
 
+  // Debugging: Log the selected city and indoor data
+  console.log('Selected City:', selectedCity);  // Log to check if city is being selected correctly
+  console.log('Indoor Data:', indoorData);      // Log to check if indoor data is updating
+
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
@@ -39,17 +43,20 @@ const App = () => {
             variant="subtitle1"
             sx={{ fontStyle: 'normal', color: '#0C3752', fontFamily: 'Roboto, sans-serif' }}
           >
-           Manage humidity inside your home by opening your windows at the right time.
+            Manage humidity inside your home by opening your windows at the right time.
           </Typography>
         </Box>
 
+        {/* City Search and Indoor Data Components */}
         <SearchCity onCitySelect={setSelectedCity} />
         <IndoorData onDataChange={setIndoorData} />
-        {selectedCity && (
+
+        {/* Render Outdoor Data only when city is selected and valid */}
+        {selectedCity && selectedCity.name && selectedCity.country && (
           <OutdoorData
-            city={selectedCity.name}
-            country={selectedCity.country}
-            indoorData={indoorData}
+            city={selectedCity.name}      // Pass the selected city's name
+            country={selectedCity.country}  // Pass the selected country's name
+            indoorData={indoorData}       // Pass indoor data (temperature, humidity)
           />
         )}
       </Paper>
