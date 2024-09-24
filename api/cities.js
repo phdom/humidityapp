@@ -1,6 +1,6 @@
-// api/cities.js
+import axios from 'axios';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   const { q } = req.query;
 
   // Validate the query parameter
@@ -8,20 +8,28 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Query parameter "q" is required and should be at least 3 characters long.' });
   }
 
-  // Mock data - Replace this with your actual data fetching logic (e.g., from a database or external API)
-  const cities = [
-    { name: 'New York', country: 'USA', state: 'NY' },
-    { name: 'Los Angeles', country: 'USA', state: 'CA' },
-    { name: 'Chicago', country: 'USA', state: 'IL' },
-    { name: 'Houston', country: 'USA', state: 'TX' },
-    { name: 'Phoenix', country: 'USA', state: 'AZ' },
-    // Add more cities as needed
-  ];
+  try {
+    // Fetch city data from OpenWeatherMap's Geocoding API
+    const response = await axios.get(`http://api.openweathermap.org/geo/1.0/direct`, {
+      params: {
+        q,            // The city query from the user
+        limit: 5,     // Limit the number of results
+        appid: process.env.OPENWEATHER_API_KEY  // Use your OpenWeatherMap API key from environment variables
+      }
+    });
 
-  // Filter cities based on the query
-  const filteredCities = cities.filter(city =>
-    city.name.toLowerCase().includes(q.toLowerCase())
-  );
+    const cityData = response.data;
 
-  res.status(200).json(filteredCities);
+    // If no cities found, return an empty array
+    if (!cityData.length) {
+      return res.status(404).json({ error: 'No cities found for the given query.' });
+    }
+
+    // Return the city data as JSON
+    res.status(200).json(cityData);
+
+  } catch (error) {
+    console.error('Error fetching city data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch city data.' });
+  }
 }
