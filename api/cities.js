@@ -1,4 +1,4 @@
-// api/cities.js
+// pages/api/cities.js
 
 import axios from 'axios';
 
@@ -15,7 +15,9 @@ export default async function handler(req, res) {
   }
 
   // Log the Mapbox API key to verify it's being accessed (remove in production)
-  console.log('Mapbox API Key:', process.env.MAPBOX_ACCESS_TOKEN);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Mapbox API Key:', process.env.MAPBOX_ACCESS_TOKEN);
+  }
 
   try {
     // Fetch city data from Mapbox Geocoding API
@@ -39,14 +41,19 @@ export default async function handler(req, res) {
     }
 
     // Map the data to a simplified format
-    const simplifiedCities = geoData.map((city) => ({
-      name: city.text,
-      full_name: city.place_name,
-      latitude: city.center[1],
-      longitude: city.center[0],
-      country: city.context.find((c) => c.id.startsWith('country')).text,
-      state: city.context.find((c) => c.id.startsWith('region')) ? city.context.find((c) => c.id.startsWith('region')).text : null,
-    }));
+    const simplifiedCities = geoData.map((city) => {
+      const countryContext = city.context.find((c) => c.id.startsWith('country'));
+      const stateContext = city.context.find((c) => c.id.startsWith('region'));
+
+      return {
+        name: city.text,
+        full_name: city.place_name,
+        latitude: city.center[1],
+        longitude: city.center[0],
+        country: countryContext ? countryContext.text : null,
+        state: stateContext ? stateContext.text : null,
+      };
+    });
 
     // Return the simplified city data as JSON
     res.status(200).json(simplifiedCities);
