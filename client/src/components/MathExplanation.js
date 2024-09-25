@@ -1,5 +1,3 @@
-// src/components/MathExplanation.js
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -63,7 +61,7 @@ const MathExplanation = ({
             fontSize: '0.95rem',
           }}
         >
-          See the math behind this result
+          Learn the science behind your result
         </Typography>
       </AccordionSummary>
       <AccordionDetails
@@ -75,20 +73,32 @@ const MathExplanation = ({
         }}
       >
         <Box>
+          {/* TL;DR Section */}
+           <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}>
+            Simple Explanation
+          </Typography>
+          <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
+           We compared the indoor and outdoor humidity levels. Since the air outside is{' '}
+            {AH_difference > 0 ? 'drier' : 'more humid'} than the air inside, opening your windows will{' '}
+            {AH_difference > 0 ? 'help bring down' : 'likely raise'} your indoor humidity levels. This happens because air
+            always tries to balance moisture, moving humidity from wetter areas to drier areas.
+          </Typography>
+
+          {/* Detailed Explanation */}
           <Typography variant="h6" gutterBottom sx={{ color: theme.palette.text.primary }}>
-            Understanding the Humidity Calculation
+            Detailed Explanation
           </Typography>
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             The humidity advice provided is based on comparing your indoor and outdoor humidity levels, along with the temperatures. Here's a step-by-step breakdown of how the calculation works:
           </Typography>
-          
+
           <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mt: 2 }}>
             Step 1: Calculate Absolute Humidity
           </Typography>
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             Absolute Humidity (AH) measures the actual amount of water vapor in the air, expressed in grams per cubic meter (g/m³). It is calculated using the following formula:
           </Typography>
-          
+
           <Box
             component="pre"
             sx={{
@@ -104,21 +114,21 @@ const MathExplanation = ({
           >
             AH = (2.1674 × E) / (T + 273.15)
           </Box>
-          
+
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             Where:<br />
             <strong>AH</strong> = Absolute Humidity (g/m³)<br />
             <strong>E</strong> = Actual Vapor Pressure (hPa)<br />
             <strong>T</strong> = Temperature (°C)
           </Typography>
-          
+
           <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mt: 2 }}>
             Step 2: Calculate Vapor Pressure
           </Typography>
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             The Actual Vapor Pressure (E) is determined using the temperature (T) and Relative Humidity (RH) with the formula:
           </Typography>
-          
+
           <Box
             component="pre"
             sx={{
@@ -134,20 +144,20 @@ const MathExplanation = ({
           >
             E = 6.112 × e<sup>((17.67 × T) / (T + 243.5))</sup> × (RH / 100)
           </Box>
-          
+
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             Where:<br />
             <strong>T</strong> = Temperature (°C)<br />
             <strong>RH</strong> = Relative Humidity (%)
           </Typography>
-          
+
           <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mt: 2 }}>
             Step 3: Compute Absolute Humidity
           </Typography>
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             Using your input values:
           </Typography>
-          
+
           <Box
             component="pre"
             sx={{
@@ -164,7 +174,7 @@ const MathExplanation = ({
             AH_indoor = (2.1674 × E_indoor) / (Indoor Temp + 273.15)<br />
             AH_outdoor = (2.1674 × E_outdoor) / (Outdoor Temp + 273.15)
           </Box>
-          
+
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             <strong>Indoor:</strong><br />
             Temperature (T<sub>in</sub>) = {indoorTemp}°C<br />
@@ -173,14 +183,14 @@ const MathExplanation = ({
             Temperature (T<sub>out</sub>) = {outdoorTemp}°C<br />
             Relative Humidity (RH<sub>out</sub>) = {outdoorRH}%<br />
           </Typography>
-          
+
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             After calculating, we obtain:<br />
             <strong>AH_indoor</strong> = {AH_indoor.toFixed(2)} g/m³<br />
             <strong>AH_outdoor</strong> = {AH_outdoor.toFixed(2)} g/m³<br />
             <strong>AH_difference</strong> = AH_indoor - AH_outdoor = {AH_difference.toFixed(2)} g/m³
           </Typography>
-          
+
           <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mt: 2 }}>
             Step 4: Determine Humidity Management Advice
           </Typography>
@@ -192,7 +202,7 @@ const MathExplanation = ({
               <li><strong>If AH_difference &le; 0 g/m³:</strong> Keep windows closed to avoid increasing indoor humidity.</li>
             </ul>
           </Typography>
-          
+
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
             This calculation helps ensure optimal indoor humidity levels for comfort and health.
           </Typography>
