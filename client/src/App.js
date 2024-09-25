@@ -16,7 +16,7 @@ import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined'; // 
 
 const App = () => {
   const [selectedCity, setSelectedCity] = useState(null);
-  const [indoorData, setIndoorData] = useState({});
+  const [indoorData, setIndoorData] = useState({ temperature: '', humidity: '' });
   const [darkMode, setDarkMode] = useState(false); // State for dark mode
   const [isCelsius, setIsCelsius] = useState(true); // State for temperature unit
 
@@ -41,6 +41,20 @@ const App = () => {
     // Store temperature unit preference in localStorage whenever it changes
     localStorage.setItem('isCelsius', isCelsius);
   }, [isCelsius]);
+
+  // Persist dark mode preference
+  useEffect(() => {
+    // Retrieve dark mode preference from localStorage on mount
+    const storedDarkMode = localStorage.getItem('darkMode');
+    if (storedDarkMode !== null) {
+      setDarkMode(storedDarkMode === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Store dark mode preference in localStorage whenever it changes
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
 
   // Select theme based on dark mode toggle or system preference
   const theme = darkMode ? darkTheme : lightTheme;
@@ -107,7 +121,7 @@ const App = () => {
 
           {/* City Search and Indoor Data Components */}
           <SearchCity onCitySelect={setSelectedCity} />
-          <IndoorData onDataChange={setIndoorData} isCelsius={isCelsius} /> {/* Pass isCelsius */}
+          <IndoorData onDataChange={setIndoorData} isCelsius={isCelsius} /> {/* Pass isCelsius and onDataChange */}
 
           {/* Render Outdoor Data only when city is selected and valid */}
           {selectedCity && selectedCity.name && selectedCity.country && (

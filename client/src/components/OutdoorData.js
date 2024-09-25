@@ -5,7 +5,16 @@ import { Card, CardContent, Typography, CircularProgress, Alert, Grid, Box } fro
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { getHumidityAdvice } from '../utils/humidityCalculations';
-import { Thermostat, Opacity, WbSunny, Cloud, Grain, Air, Umbrella } from '@mui/icons-material';
+import {
+  WbSunny,
+  Cloud,
+  Grain,
+  Air,
+  Opacity,
+  Thermostat,
+  Umbrella,
+  HelpOutline as HelpOutlineIcon, // Default Icon
+} from '@mui/icons-material';
 
 const WEATHER_CODES = {
   0: { description: 'Clear sky', Icon: WbSunny, color: '#fbc02d' },
@@ -31,7 +40,8 @@ const WEATHER_CODES = {
 const COMPASS_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
 const getWeatherIcon = (code) => {
-  const { Icon, color } = WEATHER_CODES[code] || WEATHER_CODES[1];
+  const weather = WEATHER_CODES[code] || WEATHER_CODES[1] || { Icon: HelpOutlineIcon, color: '#000000' };
+  const { Icon, color } = weather;
   return <Icon fontSize="medium" style={{ color }} />;
 };
 
@@ -58,7 +68,7 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [humidityAdvice, setHumidityAdvice] = useState('');
   const [error, setError] = useState(null);
-  const theme = useTheme(); // Use the current theme (light or dark mode)
+  const theme = useTheme();
 
   // Function to fetch weather data from Open-Meteo
   const fetchWeatherData = async (lat, lon) => {
@@ -81,6 +91,8 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
         weathercode: data.current_weather.weathercode,
         relativehumidity: data.hourly.relativehumidity_2m[currentHour],
       });
+
+      console.log(`Received Weather Code: ${data.current_weather.weathercode}`);
     } catch (err) {
       console.error('Error fetching weather data:', err.message);
       setError('Error fetching weather data. Please try again.');
@@ -91,7 +103,9 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
   const fetchCoordinates = useCallback(async () => {
     try {
       const { data } = await axios.get(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)},${encodeURIComponent(state)},${encodeURIComponent(country)}.json`,
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)},${encodeURIComponent(state)},${encodeURIComponent(
+          country
+        )}.json`,
         {
           params: {
             access_token: process.env.REACT_APP_MAPBOX_ACCESS_TOKEN,
@@ -120,7 +134,14 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
 
   // Update humidity advice when weather data or indoor data changes
   useEffect(() => {
-    if (weatherData && indoorData.temperature !== '' && indoorData.humidity !== '') {
+    // Only calculate advice if indoor data is provided
+    if (
+      weatherData &&
+      indoorData.temperature !== '' &&
+      indoorData.humidity !== '' &&
+      !isNaN(indoorData.temperature) &&
+      !isNaN(indoorData.humidity)
+    ) {
       console.log('Calculating Humidity Advice with:');
       console.log(`Indoor Temp (C): ${indoorData.temperature}`);
       console.log(`Indoor RH: ${indoorData.humidity}%`);
@@ -134,8 +155,10 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
         weatherData.relativehumidity    // %
       );
       setHumidityAdvice(advice);
+    } else {
+      setHumidityAdvice(''); // Clear advice if indoor data is incomplete
     }
-  }, [weatherData, indoorData]);
+  }, [weatherData, indoorData, isCelsius]);
 
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!weatherData) return <Typography align="center"><CircularProgress /></Typography>;
@@ -190,7 +213,7 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
           value={`${weatherData.precipitation} mm`}
         />
 
-        {/* Display humidity advice if available */}
+        {/* Conditionally render the humidity advice */}
         {humidityAdvice && (
           <Box
             sx={{
