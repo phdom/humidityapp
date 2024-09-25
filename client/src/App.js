@@ -19,6 +19,9 @@ import Brightness7Icon from '@mui/icons-material/Brightness7'; // Sun icon for l
 import Brightness4Icon from '@mui/icons-material/Brightness4'; // Moon icon for dark mode
 import ThermostatIcon from '@mui/icons-material/Thermostat'; // Celsius icon
 import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined'; // Fahrenheit icon
+import Footer from './components/footer'; // Import the Footer component
+
+
 
 const App = () => {
   const [selectedCity, setSelectedCity] = useState(null);
@@ -141,6 +144,7 @@ const App = () => {
           )}
         </Paper>
       </Container>
+    <Footer /> {/* Add Footer at the bottom */}
     </ThemeProvider>
   );
 };
