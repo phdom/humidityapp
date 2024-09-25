@@ -85,7 +85,7 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
       const currentHour = new Date(data.current_weather.time).getHours();
       setWeatherData({
         temperature: data.current_weather.temperature, // in Celsius
-        windspeed: data.current_weather.windspeed,     // in m/s
+        windspeed: data.current_weather.windspeed, // in m/s
         winddirection: data.hourly.winddirection_10m[currentHour],
         precipitation: data.hourly.precipitation[currentHour], // in mm
         weathercode: data.current_weather.weathercode,
@@ -103,9 +103,9 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
   const fetchCoordinates = useCallback(async () => {
     try {
       const { data } = await axios.get(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(city)},${encodeURIComponent(state)},${encodeURIComponent(
-          country
-        )}.json`,
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          city
+        )},${encodeURIComponent(state)},${encodeURIComponent(country)}.json`,
         {
           params: {
             access_token: process.env.REACT_APP_MAPBOX_ACCESS_TOKEN,
@@ -134,7 +134,7 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
 
   // Update humidity advice when weather data or indoor data changes
   useEffect(() => {
-    // Only calculate advice if indoor data is provided
+    // Only calculate advice if indoor data is provided (both temperature and humidity)
     if (
       weatherData &&
       indoorData.temperature !== '' &&
@@ -149,10 +149,10 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
       console.log(`Outdoor RH: ${weatherData.relativehumidity}%`);
 
       const advice = getHumidityAdvice(
-        indoorData.temperature,         // in Celsius
-        indoorData.humidity,            // %
-        weatherData.temperature,        // in Celsius
-        weatherData.relativehumidity    // %
+        indoorData.temperature, // in Celsius
+        indoorData.humidity, // %
+        weatherData.temperature, // in Celsius
+        weatherData.relativehumidity // %
       );
       setHumidityAdvice(advice);
     } else {

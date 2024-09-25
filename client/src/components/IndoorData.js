@@ -20,7 +20,8 @@ const IndoorData = ({ onDataChange, isCelsius }) => {
       tempC = toCelsius(tempC);
     }
 
-    onDataChange({ temperature: isNaN(tempC) ? '' : tempC, humidity: parseFloat(humidity) || 0 });
+    // Update parent state with new temperature and existing humidity
+    onDataChange({ temperature: isNaN(tempC) ? '' : tempC, humidity: parseFloat(humidity) || '' });
   };
 
   // Handle humidity input change
@@ -31,7 +32,8 @@ const IndoorData = ({ onDataChange, isCelsius }) => {
     let tempC = isCelsius ? parseFloat(temperature) : toCelsius(parseFloat(temperature));
     tempC = isNaN(tempC) ? '' : tempC;
 
-    onDataChange({ temperature: tempC, humidity: parseFloat(value) || 0 });
+    // Update parent state with existing temperature and new humidity
+    onDataChange({ temperature: tempC, humidity: parseFloat(value) || '' });
   };
 
   // Determine the placeholder and unit based on selected temperature unit
