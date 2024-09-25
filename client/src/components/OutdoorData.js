@@ -1,8 +1,10 @@
+// src/components/OutdoorData.js
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, Typography, CircularProgress, Alert, Grid, Box } from '@mui/material';
-import { useTheme } from '@mui/material/styles'; // Import useTheme for dynamic theming
+import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
-import { getHumidityAdvice } from '../utils';
+import { getHumidityAdvice } from '../utils/humidityCalculations';
 import { Thermostat, Opacity, WbSunny, Cloud, Grain, Air, Umbrella } from '@mui/icons-material';
 
 const WEATHER_CODES = {
@@ -52,12 +54,13 @@ const WeatherInfo = ({ icon, label, value }) => (
   </Grid>
 );
 
-const OutdoorData = ({ city, state, country, indoorData }) => {
+const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [humidityAdvice, setHumidityAdvice] = useState('');
   const [error, setError] = useState(null);
   const theme = useTheme(); // Use the current theme (light or dark mode)
 
+  // Function to fetch weather data from Open-Meteo
   const fetchWeatherData = async (lat, lon) => {
     try {
       const { data } = await axios.get('https://api.open-meteo.com/v1/forecast', {
@@ -71,10 +74,10 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
 
       const currentHour = new Date(data.current_weather.time).getHours();
       setWeatherData({
-        temperature: data.current_weather.temperature,
-        windspeed: data.current_weather.windspeed,
+        temperature: data.current_weather.temperature, // in Celsius
+        windspeed: data.current_weather.windspeed,     // in m/s
         winddirection: data.hourly.winddirection_10m[currentHour],
-        precipitation: data.hourly.precipitation[currentHour],
+        precipitation: data.hourly.precipitation[currentHour], // in mm
         weathercode: data.current_weather.weathercode,
         relativehumidity: data.hourly.relativehumidity_2m[currentHour],
       });
@@ -84,6 +87,7 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
     }
   };
 
+  // Memoized fetchCoordinates function using Mapbox Geocoding API
   const fetchCoordinates = useCallback(async () => {
     try {
       const { data } = await axios.get(
@@ -109,17 +113,25 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
     }
   }, [city, state, country]);
 
+  // Fetch coordinates when the component mounts or city/country changes
   useEffect(() => {
     if (city && country) fetchCoordinates();
   }, [city, state, country, fetchCoordinates]);
 
+  // Update humidity advice when weather data or indoor data changes
   useEffect(() => {
-    if (weatherData && indoorData.temperature && indoorData.humidity) {
+    if (weatherData && indoorData.temperature !== '' && indoorData.humidity !== '') {
+      console.log('Calculating Humidity Advice with:');
+      console.log(`Indoor Temp (C): ${indoorData.temperature}`);
+      console.log(`Indoor RH: ${indoorData.humidity}%`);
+      console.log(`Outdoor Temp (C): ${weatherData.temperature}`);
+      console.log(`Outdoor RH: ${weatherData.relativehumidity}%`);
+
       const advice = getHumidityAdvice(
-        parseFloat(indoorData.temperature),
-        parseFloat(indoorData.humidity),
-        weatherData.temperature,
-        weatherData.relativehumidity
+        indoorData.temperature,         // in Celsius
+        indoorData.humidity,            // %
+        weatherData.temperature,        // in Celsius
+        weatherData.relativehumidity    // %
       );
       setHumidityAdvice(advice);
     }
@@ -129,6 +141,14 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
   if (!weatherData) return <Typography align="center"><CircularProgress /></Typography>;
 
   const adviceStyle = getAdviceStyle(weatherData.relativehumidity);
+
+  // Function to convert Celsius to Fahrenheit
+  const toFahrenheit = (celsius) => (celsius * 9 / 5) + 32;
+
+  // Determine the temperature based on selected unit
+  const displayTemperature = isCelsius
+    ? `${weatherData.temperature}°C`
+    : `${toFahrenheit(weatherData.temperature).toFixed(1)}°F`;
 
   return (
     <Card
@@ -140,6 +160,7 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
       }}
     >
       <CardContent>
+        {/* Updated to show city, state, and country */}
         <Typography variant="h5" gutterBottom>
           Weather in {city}, {state ? `${state}, ` : ''}{country}
         </Typography>
@@ -148,19 +169,43 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
           label="Condition"
           value={WEATHER_CODES[weatherData.weathercode]?.description || 'Unknown'}
         />
-        <WeatherInfo icon={<Thermostat color="error" />} label="Temperature" value={`${weatherData.temperature}°C`} />
-        <WeatherInfo icon={<Opacity color="primary" />} label="Humidity" value={`${weatherData.relativehumidity}%`} />
+        <WeatherInfo
+          icon={<Thermostat color="error" />}
+          label="Temperature"
+          value={displayTemperature}
+        />
+        <WeatherInfo
+          icon={<Opacity color="primary" />}
+          label="Humidity"
+          value={`${weatherData.relativehumidity}%`}
+        />
         <WeatherInfo
           icon={<Air color="action" />}
           label="Wind"
           value={`${weatherData.windspeed} m/s, ${convertWindDirection(weatherData.winddirection)}`}
         />
-        <WeatherInfo icon={<Umbrella color="primary" />} label="Precipitation" value={`${weatherData.precipitation} mm`} />
+        <WeatherInfo
+          icon={<Umbrella color="primary" />}
+          label="Precipitation"
+          value={`${weatherData.precipitation} mm`}
+        />
 
+        {/* Display humidity advice if available */}
         {humidityAdvice && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 3, p: 2, backgroundColor: adviceStyle.backgroundColor, borderRadius: '10px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mt: 3,
+              p: 2,
+              backgroundColor: adviceStyle.backgroundColor,
+              borderRadius: '10px',
+            }}
+          >
             {adviceStyle.icon}
-            <Typography variant="h6" sx={{ ml: 2, color: adviceStyle.textColor }}>{humidityAdvice}</Typography>
+            <Typography variant="h6" sx={{ ml: 2, color: adviceStyle.textColor }}>
+              {humidityAdvice}
+            </Typography>
           </Box>
         )}
       </CardContent>

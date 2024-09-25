@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, Typography, CircularProgress, Alert, Grid, Box } from '@mui/material';
+import { useTheme } from '@mui/material/styles'; // Import useTheme for dynamic theming
 import axios from 'axios';
 import { getHumidityAdvice } from '../utils';
 import { Thermostat, Opacity, WbSunny, Cloud, Grain, Air, Umbrella } from '@mui/icons-material';
@@ -55,6 +56,7 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [humidityAdvice, setHumidityAdvice] = useState('');
   const [error, setError] = useState(null);
+  const theme = useTheme(); // Use the current theme (light or dark mode)
 
   const fetchWeatherData = async (lat, lon) => {
     try {
@@ -129,9 +131,15 @@ const OutdoorData = ({ city, state, country, indoorData }) => {
   const adviceStyle = getAdviceStyle(weatherData.relativehumidity);
 
   return (
-    <Card sx={{ mb: 4, backgroundColor: '#ffffff', borderRadius: '15px' }}>
+    <Card
+      sx={{
+        mb: 4,
+        backgroundColor: theme.palette.background.paper, // Theme-based background color
+        color: theme.palette.text.primary, // Adapt text color based on the theme
+        borderRadius: '15px',
+      }}
+    >
       <CardContent>
-        {/* Updated to show city, state, and country */}
         <Typography variant="h5" gutterBottom>
           Weather in {city}, {state ? `${state}, ` : ''}{country}
         </Typography>
