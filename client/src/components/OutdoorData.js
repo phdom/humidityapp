@@ -1,21 +1,31 @@
 // src/components/OutdoorData.js
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, Typography, CircularProgress, Alert, Grid, Box } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  Typography,
+  CircularProgress,
+  Alert,
+  Grid,
+  Box,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
-import { getHumidityAdvice } from '../utils/humidityCalculations';
+import { getHumidityAdvice, calculateAbsoluteHumidity } from '../utils/humidityCalculations';
 import {
   WbSunny,
   Cloud,
   Grain,
-  Air,
   Opacity,
   Thermostat,
   Umbrella,
+  Air,
   HelpOutline as HelpOutlineIcon, // Default Icon
 } from '@mui/icons-material';
+import MathExplanation from './MathExplanation'; // Import the interactive math explanation component
 
+// Mapping of weather codes to descriptions, icons, and colors
 const WEATHER_CODES = {
   0: { description: 'Clear sky', Icon: WbSunny, color: '#fbc02d' },
   1: { description: 'Mainly clear', Icon: Cloud, color: '#9e9e9e' },
@@ -37,24 +47,29 @@ const WEATHER_CODES = {
   99: { description: 'Thunderstorm with heavy hail', Icon: Grain, color: '#ff6f00' },
 };
 
+// Array for compass direction mapping
 const COMPASS_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
+// Function to get the appropriate weather icon based on weather code
 const getWeatherIcon = (code) => {
   const weather = WEATHER_CODES[code] || WEATHER_CODES[1] || { Icon: HelpOutlineIcon, color: '#000000' };
   const { Icon, color } = weather;
   return <Icon fontSize="medium" style={{ color }} />;
 };
 
+// Function to convert wind direction degrees to compass directions
 const convertWindDirection = (deg) => COMPASS_DIRECTIONS[Math.round(deg / 45) % 8];
 
+// Function to get styling for humidity advice box
 const getAdviceStyle = (humidity) => ({
   icon: <Opacity fontSize="large" style={{ color: '#ffffff' }} />,
   backgroundColor: '#3881A1',
   textColor: '#ffffff',
 });
 
+// Component to display individual weather information
 const WeatherInfo = ({ icon, label, value }) => (
-  <Grid container spacing={1} alignItems="center">
+  <Grid container spacing={1} alignItems="center" sx={{ mb: 1 }}>
     <Grid item>{icon}</Grid>
     <Grid item>
       <Typography variant="body1">
@@ -64,6 +79,7 @@ const WeatherInfo = ({ icon, label, value }) => (
   </Grid>
 );
 
+// Main OutdoorData component
 const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [humidityAdvice, setHumidityAdvice] = useState('');
@@ -79,6 +95,7 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
           longitude: lon,
           hourly: 'temperature_2m,relativehumidity_2m,winddirection_10m,precipitation,weathercode',
           current_weather: true,
+          timezone: 'auto',
         },
       });
 
@@ -160,6 +177,7 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
     }
   }, [weatherData, indoorData, isCelsius]);
 
+  // Handle error states
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!weatherData) return <Typography align="center"><CircularProgress /></Typography>;
 
@@ -173,6 +191,11 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
     ? `${weatherData.temperature}°C`
     : `${toFahrenheit(weatherData.temperature).toFixed(1)}°F`;
 
+  // Calculate Absolute Humidity for explanation
+  const AH_indoor = calculateAbsoluteHumidity(indoorData.temperature, indoorData.humidity);
+  const AH_outdoor = calculateAbsoluteHumidity(weatherData.temperature, weatherData.relativehumidity);
+  const AH_difference = AH_indoor - AH_outdoor;
+
   return (
     <Card
       sx={{
@@ -180,55 +203,80 @@ const OutdoorData = ({ city, state, country, indoorData, isCelsius }) => {
         backgroundColor: theme.palette.background.paper, // Theme-based background color
         color: theme.palette.text.primary, // Adapt text color based on the theme
         borderRadius: '15px',
+        boxShadow: theme.shadows[3],
       }}
     >
       <CardContent>
-        {/* Updated to show city, state, and country */}
-        <Typography variant="h5" gutterBottom>
+        {/* Display city, state, and country */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
           Weather in {city}, {state ? `${state}, ` : ''}{country}
         </Typography>
+
+        {/* Weather Condition */}
         <WeatherInfo
           icon={getWeatherIcon(weatherData.weathercode)}
           label="Condition"
           value={WEATHER_CODES[weatherData.weathercode]?.description || 'Unknown'}
         />
+
+        {/* Temperature */}
         <WeatherInfo
-          icon={<Thermostat color="error" />}
+          icon={<Thermostat sx={{ color: theme.palette.text.primary }} />}
           label="Temperature"
           value={displayTemperature}
         />
+
+        {/* Humidity */}
         <WeatherInfo
-          icon={<Opacity color="primary" />}
+          icon={<Opacity sx={{ color: theme.palette.text.primary }} />}
           label="Humidity"
           value={`${weatherData.relativehumidity}%`}
         />
+
+        {/* Wind */}
         <WeatherInfo
-          icon={<Air color="action" />}
+          icon={<Air sx={{ color: theme.palette.text.primary }} />}
           label="Wind"
           value={`${weatherData.windspeed} m/s, ${convertWindDirection(weatherData.winddirection)}`}
         />
+
+        {/* Precipitation */}
         <WeatherInfo
-          icon={<Umbrella color="primary" />}
+          icon={<Umbrella sx={{ color: theme.palette.text.primary }} />}
           label="Precipitation"
           value={`${weatherData.precipitation} mm`}
         />
 
-        {/* Conditionally render the humidity advice */}
+        {/* Humidity Advice with Embedded MathExplanation */}
         {humidityAdvice && (
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
               mt: 3,
               p: 2,
               backgroundColor: adviceStyle.backgroundColor,
               borderRadius: '10px',
+              boxShadow: theme.shadows[2],
             }}
           >
-            {adviceStyle.icon}
-            <Typography variant="h6" sx={{ ml: 2, color: adviceStyle.textColor }}>
-              {humidityAdvice}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              {adviceStyle.icon}
+              <Typography variant="h6" sx={{ ml: 2, color: adviceStyle.textColor, fontWeight: 'medium' }}>
+                {humidityAdvice}
+              </Typography>
+            </Box>
+            {/* Embed MathExplanation Here */}
+            <MathExplanation
+              indoorTemp={indoorData.temperature}
+              indoorRH={indoorData.humidity}
+              outdoorTemp={weatherData.temperature}
+              outdoorRH={weatherData.relativehumidity}
+              AH_indoor={AH_indoor}
+              AH_outdoor={AH_outdoor}
+              AH_difference={AH_difference}
+            />
           </Box>
         )}
       </CardContent>
