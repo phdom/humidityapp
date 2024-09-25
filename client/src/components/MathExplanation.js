@@ -78,10 +78,16 @@ const MathExplanation = ({
             Simple Explanation
           </Typography>
           <Typography variant="body2" paragraph sx={{ color: theme.palette.text.secondary }}>
-           We compared the indoor and outdoor humidity levels. Since the air outside is{' '}
+      
+           
+           We compared the indoor and outdoor humidity levels, taking both temperature and the true relative humidity into account.  
+             <br />  <br />
+           Since the air outside is{' '}
             {AH_difference > 0 ? 'drier' : 'more humid'} than the air inside, opening your windows will{' '}
             {AH_difference > 0 ? 'help bring down' : 'likely raise'} your indoor humidity levels. This happens because air
             always tries to balance moisture, moving humidity from wetter areas to drier areas.
+              <br />  <br />
+             The science behind these calculations is complex, as it requires considering both temperature and humidity to get an accurate picture of how moisture will behave indoors. 
           </Typography>
 
           {/* Detailed Explanation */}
