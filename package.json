@@ -1,18 +1,19 @@
 {
   "name": "humidity-advisor",
   "version": "1.0.0",
-  "description": "A tool to advise whether to open windows based on humidity levels",
-  "main": "server.js",
+  "description": "Smart humidity control - helps you decide when to open windows based on indoor/outdoor humidity comparison",
+  "main": "xserver.js",
   "scripts": {
-    "start": "node server.js",
-    "server": "nodemon server.js",
+    "start": "node xserver.js",
+    "server": "nodemon xserver.js",
     "client": "npm start --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
-  "author": "Your Name",
-  "license": "ISC",
+  "keywords": ["humidity", "weather", "air-quality", "home-automation", "smart-home"],
+  "author": "Dom",
+  "license": "MIT",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.7.7",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
